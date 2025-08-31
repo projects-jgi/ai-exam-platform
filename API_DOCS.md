@@ -8,7 +8,9 @@ All endpoints (except registration and login) require session authentication. Fr
 
 ## Endpoints
 
-### 1. User Registration
+### 1. User Authentication
+
+#### User Registration
 **POST** `/auth/register/`
 
 Creates a new user and automatically creates corresponding profile.
@@ -37,7 +39,7 @@ Creates a new user and automatically creates corresponding profile.
 
 ---
 
-### 2. User Login
+#### User Login
 **POST** `/auth/login/`
 
 Authenticates user and creates session.
@@ -66,7 +68,7 @@ Authenticates user and creates session.
 
 ---
 
-### 3. User Logout
+#### User Logout
 **POST** `/auth/logout/`
 
 Terminates the user session.
@@ -80,7 +82,7 @@ Terminates the user session.
 
 ---
 
-### 4. Get Current User Profile
+#### Get Current User Profile
 **GET** `/profile/me/`
 
 Returns complete profile information for authenticated user.
@@ -112,6 +114,180 @@ Returns complete profile information for authenticated user.
 
 ---
 
+### 2. Exam Management
+
+#### List Available Exams
+**GET** `/exams/`
+
+Returns exams available to the current user based on their role and group.
+
+**Response (Student - 200 OK):**
+```json
+[
+  {
+    "id": 3,
+    "title": "MCA Semester 3 Final Exam",
+    "description": "End of semester examination",
+    "created_by": 1,
+    "created_by_name": "Professor Smith",
+    "start_time": "2025-08-28T07:00:00+05:30",
+    "end_time": "2025-08-28T08:00:00+05:30",
+    "duration_minutes": 60,
+    "max_attempts": 1,
+    "shuffle_questions": false,
+    "show_results_after": false,
+    "is_proctored": true,
+    "status": "active",
+    "questions": [],
+    "created_at": "2025-08-27T21:47:52.645527+05:30",
+    "updated_at": "2025-08-27T21:47:52.645527+05:30"
+  }
+]
+```
+
+---
+
+#### Get Exam Details
+**GET** `/exams/{id}/`
+
+Returns detailed information about a specific exam.
+
+**Response (200 OK):**
+```json
+{
+  "id": 3,
+  "title": "MCA Semester 3 Final Exam",
+  "description": "End of semester examination",
+  "created_by": 1,
+  "created_by_name": "Professor Smith",
+  "start_time": "2025-08-28T07:00:00+05:30",
+  "end_time": "2025-08-28T08:00:00+05:30",
+  "duration_minutes": 60,
+  "max_attempts": 1,
+  "shuffle_questions": false,
+  "show_results_after": false,
+  "is_proctored": true,
+  "status": "active",
+  "questions": [
+    {
+      "id": 1,
+      "exam": 3,
+      "question_text": "What is Python?",
+      "question_type": "descriptive",
+      "points": 10,
+      "order": 1,
+      "code_template": "",
+      "test_cases": null,
+      "options": [],
+      "created_at": "2025-08-27T21:50:12.645527+05:30"
+    }
+  ],
+  "created_at": "2025-08-27T21:47:52.645527+05:30",
+  "updated_at": "2025-08-27T21:47:52.645527+05:30"
+}
+```
+
+---
+
+#### Start Exam Attempt
+**POST** `/exams/{exam_id}/start/`
+
+Starts a new exam attempt for the authenticated student.
+
+**Response (Success - 200 OK):**
+```json
+{
+  "attempt_id": 1,
+  "message": "Exam started successfully",
+  "duration_minutes": 60
+}
+```
+
+---
+
+### 3. Exam Attempt Management
+
+#### Get Attempt Details
+**GET** `/attempts/{attempt_id}/`
+
+Returns detailed information about a specific exam attempt.
+
+**Response (200 OK):**
+```json
+{
+  "id": 1,
+  "student": 6,
+  "student_name": "Rahul M",
+  "exam": 3,
+  "attempt_number": 1,
+  "start_time": "2025-08-31T20:25:37.771491+05:30",
+  "end_time": null,
+  "actual_duration": null,
+  "violation_count": 0,
+  "screen_switch_count": 0,
+  "status": "in_progress",
+  "score": null,
+  "max_score": null,
+  "answers": [
+    {
+      "id": 1,
+      "attempt": 1,
+      "question": 1,
+      "mcq_answer": null,
+      "descriptive_answer": "Python is a programming language...",
+      "code_answer": "",
+      "file_answer": null,
+      "points_awarded": 10.0,
+      "feedback": "Good answer!",
+      "submitted_at": "2025-08-31T20:36:46.966120+05:30"
+    }
+  ]
+}
+```
+
+---
+
+#### Submit Answer
+**POST** `/attempts/{attempt_id}/submit/`
+
+Submits an answer for a question in an ongoing exam attempt.
+
+**Request Body:**
+```json
+{
+  "question_id": 1,
+  "answer": "Python is a high-level programming language...",
+  "answer_type": "descriptive"
+}
+```
+
+**Response (Success - 200 OK):**
+```json
+{
+  "message": "Answer submission received",
+  "attempt_id": 1,
+  "status": "Answer processing will be implemented soon"
+}
+```
+
+---
+
+#### Complete Exam Attempt
+**POST** `/attempts/{attempt_id}/complete/`
+
+Marks an exam attempt as completed and calculates final duration.
+
+**Response (Success - 200 OK):**
+```json
+{
+  "message": "Exam completed successfully",
+  "score": 85.5,
+  "duration_minutes": 58
+}
+```
+
+---
+
 ## Frontend Integration Guide
 
 ### 1. Axios Configuration
@@ -127,54 +303,42 @@ const API = axios.create({
 export default API;
 ```
 
-### 2. Login Example
+### 2. Complete Exam Flow Example
 ```javascript
-// pages/login.js
-import API from '../lib/axios';
-
-const handleLogin = async (email, password) => {
+// Example of complete exam flow
+const completeExamFlow = async (examId) => {
   try {
-    const response = await API.post('/auth/login/', {
-      email,
-      password
+    // 1. Start exam attempt
+    const startResponse = await API.post(`/exams/${examId}/start/`);
+    const attemptId = startResponse.data.attempt_id;
+    
+    // 2. Submit answers
+    await API.post(`/attempts/${attemptId}/submit/`, {
+      question_id: 1,
+      answer: "Python is a programming language...",
+      answer_type: "descriptive"
     });
-    console.log('Login successful:', response.data);
-    // Redirect to dashboard
+    
+    // 3. Complete attempt
+    const completeResponse = await API.post(`/attempts/${attemptId}/complete/`);
+    console.log('Exam completed:', completeResponse.data);
+    
   } catch (error) {
-    console.error('Login failed:', error.response?.data);
+    console.error('Exam error:', error.response?.data);
   }
 };
 ```
 
-### 3. Get Profile Example
+### 3. Get Exam Attempts Example
 ```javascript
-// pages/dashboard.js
-import { useEffect, useState } from 'react';
-import API from '../lib/axios';
-
-const Dashboard = () => {
-  const [profile, setProfile] = useState(null);
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await API.get('/profile/me/');
-        setProfile(response.data);
-      } catch (error) {
-        console.error('Failed to fetch profile:', error);
-        // Redirect to login if unauthorized
-      }
-    };
-    fetchProfile();
-  }, []);
-
-  return (
-    <div>
-      {profile && (
-        <h1>Welcome, {profile.user.first_name}!</h1>
-      )}
-    </div>
-  );
+// Get student's exam attempts
+const getStudentAttempts = async () => {
+  try {
+    const response = await API.get('/attempts/'); // This endpoint needs implementation
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch attempts:', error);
+  }
 };
 ```
 
@@ -185,36 +349,28 @@ const Dashboard = () => {
 ### 400 Bad Request
 ```json
 {
-  "email": ["This field is required."],
-  "password": ["This field is required."]
-}
-```
-
-### 401 Unauthorized
-```json
-{
-  "detail": "Authentication credentials were not provided."
+  "error": "Exam is not available at this time"
 }
 ```
 
 ### 403 Forbidden
 ```json
 {
-  "detail": "You do not have permission to perform this action."
+  "error": "You are not allowed to take this exam"
 }
 ```
 
 ### 404 Not Found
 ```json
 {
-  "detail": "Not found."
+  "error": "Exam not found"
 }
 ```
 
-### 500 Internal Server Error
+### 409 Conflict
 ```json
 {
-  "detail": "Internal server error occurred."
+  "error": "Maximum attempts reached for this exam"
 }
 ```
 
@@ -237,5 +393,6 @@ For authenticated requests, include:
 ## Development Notes
 - Backend runs on port 8000
 - Frontend should run on port 3000 for CORS compatibility
-- Database uses SQLite for development
+- Database: PostgreSQL with complete schema
 - Session-based authentication with Django sessions
+- CSRF protection enabled (include X-CSRFToken header for POST requests)
