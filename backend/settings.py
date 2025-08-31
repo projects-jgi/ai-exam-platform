@@ -24,7 +24,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     # Local Apps
-    'core',  # Your new app
+    'core', 'exams', # Your new app
 ]
 
 MIDDLEWARE = [

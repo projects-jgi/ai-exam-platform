@@ -1,9 +1,9 @@
 from rest_framework import status, permissions
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes, authentication_classes
-from rest_framework.authentication import SessionAuthentication
+from rest_framework.decorators import api_view, permission_classes
 from django.contrib.auth import login, logout
 from django.shortcuts import get_object_or_404
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 from .models import User, StudentProfile, FacultyProfile, HODProfile
 from .serializers import (
@@ -39,6 +39,7 @@ def user_registration_view(request):
 
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
+@ensure_csrf_cookie  # ← This will set CSRF token in cookies
 def user_login_view(request):
     if request.method == 'POST':
         serializer = UserLoginSerializer(data=request.data, context={'request': request})
