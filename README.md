@@ -22,6 +22,23 @@ ai-exam-platform/
 └── README.md
 
 ## ⚡ Quick Start
+## 🎯 New Features Added
+
+### Exam Management System
+- ✅ **Exam Creation & Management** - Faculty can create exams with various settings
+- ✅ **Student Exam Access** - Automatic enrollment based on student groups
+- ✅ **Timed Exam Attempts** - Start, submit, and complete exams with duration tracking
+- ✅ **Multiple Question Types** - Support for MCQ, coding, descriptive, and file upload questions
+- ✅ **Answer Submission** - Students can submit answers with automatic tracking
+- ✅ **Real-time Status Updates** - Track exam progress from in_progress to submitted
+
+### API Endpoints Now Available
+- `GET /api/exams/` - List available exams
+- `GET /api/exams/{id}/` - Get exam details
+- `POST /api/exams/{exam_id}/start/` - Start exam attempt
+- `GET /api/attempts/{attempt_id}/` - View attempt details
+- `POST /api/attempts/{attempt_id}/submit/` - Submit answers
+- `POST /api/attempts/{attempt_id}/complete/` - Complete exam attempt
 
 ### Prerequisites
 - Python 3.8+
